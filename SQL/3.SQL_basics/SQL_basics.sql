@@ -41,9 +41,9 @@ select c.store_id as "ID магазина",
 	ct.city as "Город магазина",
 	concat_ws(' ', st.first_name, st.last_name) as "Имя и фамилия продавца"
 from customer c 
-join address a on a.address_id = c.store_id
-join city ct on ct.city_id = a.city_id
 join store s on s.store_id = c.store_id 
+join address a on a.address_id = s.address_id
+join city ct on ct.city_id = a.city_id
 join staff st on st.staff_id = s.manager_staff_id
 group by c.store_id, a.address_id, ct.city_id, st.staff_id
 having count(c.customer_id) > 300
