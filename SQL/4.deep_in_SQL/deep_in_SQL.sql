@@ -197,7 +197,7 @@ where film_name = 'Back to the Future'
 --Напишите SQL-запрос, который выведет все колонки из таблицы film_new, 
 --а также новую вычисляемую колонку "длительность фильма в часах", округлённую до десятых
 
-select *, round(film_duration / 60, 1)
+select *, round(film_duration / 60., 1)
 from film_new
 
 --ЗАДАНИЕ №7 
