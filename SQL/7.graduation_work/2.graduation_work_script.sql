@@ -61,8 +61,7 @@ limit 10
 select distinct b.book_ref
 from bookings b
 join tickets t on t.book_ref = b.book_ref
-join ticket_flights tf on tf.ticket_no = t.ticket_no
-left join boarding_passes bp on bp.flight_id = tf.flight_id and bp.ticket_no = tf.ticket_no
+left join boarding_passes bp on bp.ticket_no = t.ticket_no
 where boarding_no is null
 
 
@@ -99,12 +98,14 @@ with
 )
 select f.departure_airport airport,
 	f.scheduled_departure,
-	sum(sum(c2.count)) over (partition by f.departure_airport order by f.scheduled_departure),
+	sum(sum(c2.count)) over (partition by f.departure_airport, f.scheduled_departure order by f.scheduled_departure),
 	f.flight_id,
+	(c1.count - c2.count) free_seats_quantity,
 	((c1.count - c2.count)::numeric/c1.count*100)::numeric(4) free_seats_percent
 from flights f
 join c1 on c1.flight_id = f.flight_id 
 join c2 on c2.flight_id = f.flight_id
+where f.status = 'Arrived' or f.status = 'Departed'
 group by f.flight_id, c1.count, c2.count
 		
 		
@@ -120,9 +121,8 @@ group by f.flight_id, c1.count, c2.count
 -------------------------------------------------------------------------------------------------------------------
 
 select a.model,
-	round((count(1)::numeric/(select count(1) from ticket_flights))*100, 2) ratio_percent 
-from ticket_flights tf
-join flights f on f.flight_id = tf.flight_id 
+	round((count(1)::numeric/(select count(1) from flights))*100, 2) ratio_percent 
+from flights f
 join aircrafts a on a.aircraft_code = f.aircraft_code
 group by a.model
 
@@ -143,7 +143,7 @@ with ce as (
 		select flight_id, amount 
 		from ticket_flights tf
 		where tf.fare_conditions = 'Business')	
-select a.city
+select distinct a.city
 from flights f
 join ce on ce.flight_id = f.flight_id 
 join cb on cb.flight_id = f.flight_id
@@ -164,8 +164,7 @@ where cb.amount < ce.amount
 -- самостоятельно созданные представления, оператор EXCEPT)
 -------------------------------------------------------------------------------------------
 
-
-select a1.airport_code, a2.airport_code
+select a1.city, a2.city 
 from airports a1, airports a2
 where a1.airport_code != a2.airport_code
 except select f.departure_airport, f.arrival_airport 
