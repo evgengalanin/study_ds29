@@ -189,29 +189,32 @@ select * from unrelated_cities
 -- перелетов  в самолетах, обслуживающих эти рейсы. (Оператор RADIANS или использование sind/cosd, CASE)
 ------------------------------------------------------------------------------------------------------------------------
 
-select f.departure_airport, a.latitude, a.longitude,
-	f.arrival_airport, a2.latitude, a2.longitude
-from flights f 
-join airports a on a.airport_code = f.departure_airport
-join airports a2 on a2.airport_code = f.arrival_airport
+select
+	t.departure_airport,
+	t.arrival_airport,
+	t.round,
+	t.range,
+	case
+		when t.round > t.range then 'oops'
+		else 'yahoo'
+	end
+from (select
+		distinct on (f.departure_airport, f.arrival_airport)
+		f.departure_airport,
+		f.arrival_airport,
+		round(acos(sin(radians(a.latitude))*sin(radians(a2.latitude))
+			+ cos(radians(a.latitude))*cos(radians(a2.latitude))*cos(radians(a.longitude - a2.longitude)))*6371),
+		a3.range
+	from flights f 
+	join airports a on a.airport_code = f.departure_airport
+	join airports a2 on a2.airport_code = f.arrival_airport
+	join aircrafts a3 on a3.aircraft_code = f.aircraft_code) t
 
 
-
-select t.departure_airport, t.arrival_airport,
-	acos(sin(latitude_a)*sin(latitude_b) + cos(latitude_a)*cos(latitude_b)*cos(longitude_a - longitude_b))
-from (select 
-	f.departure_airport,
-	a.latitude as latitude_a,
-	a.longitude as longitude_a,
-	f.arrival_airport,
-	a2.latitude as latitude_b,
-	a2.longitude as longitude_b
-from flights f 
-join airports a on a.airport_code = f.departure_airport
-join airports a2 on a2.airport_code = f.arrival_airport) t
-
-
-
+-- Описание:
+-- В подзапросе получаю таблицу аэропортов, между которыми выполняются рейсы,
+-- с расстояниями между ними и максимальной дальностью полёта воздушного судна выполняющего рейс.
+-- И вывожу в результат всю эту таблицу целиком, добавив с помощью CASE столбец сравнения.
 
 
 
