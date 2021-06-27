@@ -164,17 +164,30 @@ where cb.amount < ce.amount
 -- самостоятельно созданные представления, оператор EXCEPT)
 -------------------------------------------------------------------------------------------
 
-select a1.city, a2.city 
-from airports a1, airports a2
-where a1.airport_code != a2.airport_code
-except select f.departure_airport, f.arrival_airport 
-from flights f 
+create view unrelated_cities as select a1.city city_1, a2.city city_2
+	from airports a1, airports a2
+	where a1.airport_code != a2.airport_code
+	except select t.city_1, t.city_2 
+	from (select distinct a1.city city_1, a2.city city_2
+			from flights f 
+			join airports a1 on a1.airport_code = f.departure_airport
+			join airports a2 on a2.airport_code = f.arrival_airport
+	) t
 
+select * from unrelated_cities
+
+
+-- Описание:
+-- Из таблицы рейсов в подзапросе получаю две колонки городов, между которыми есть прямые рейсы.
+-- С помощью декартова произведения получаю все возможные комбинации городов.
+-- Исключаю те города, что получил из таблицы рейсов, из тех, что получены декартовым.
+-- Всё оборачиваю в представление.
 
 
 
 -- 9. Вычислите расстояние между аэропортами, связанными прямыми рейсами, сравните с допустимой максимальной дальностью
 -- перелетов  в самолетах, обслуживающих эти рейсы. (Оператор RADIANS или использование sind/cosd, CASE)
+------------------------------------------------------------------------------------------------------------------------
 
 select f.departure_airport, a.latitude, a.longitude,
 	f.arrival_airport, a2.latitude, a2.longitude
